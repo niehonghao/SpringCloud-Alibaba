@@ -327,3 +327,59 @@ spring:
 #### 配置自动更新
 
 通过使用 SpringCloud 原生注解 `@RefreshScope` 实现配置自动更新
+
+#### Nacos中添加配置信息
+
+**设置DataId**
+
+`${prefix}-${spring.profiles.active}.${file-extension}`
+
+- `prefix` 默认为 `spring.application.name` 的值，也可以通过配置项 `spring.cloud.nacos.config.prefix`来配置。
+- `spring.profiles.active` 即为当前环境对应的 profile，详情可以参考 [Spring Boot文档](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-profiles.html#boot-features-profiles)。 **注意：当 `spring.profiles.active` 为空时，对应的连接符 `-` 也将不存在，dataId 的拼接格式变成 `${prefix}.${file-extension}s`**
+- `file-exetension` 为配置内容的数据格式，可以通过配置项 `spring.cloud.nacos.config.file-extension` 来配置。目前只支持 `properties` 和 `yaml` 类型。
+
+![DataId](https://typora-nhh.oss-cn-chengdu.aliyuncs.com/SpringCloudAlibaba/DataId.png)
+
+#### 分类配置
+
+##### Namespace+Group+Data ID 三者关系
+
+类似Java里面的package名和类名，最外层的namespace是可以用于区分部署环境的，Group和DataID逻辑上区分两个目标对象。
+
+**关系**：
+
+![分类配置三者关系](https://typora-nhh.oss-cn-chengdu.aliyuncs.com/SpringCloudAlibaba/%E5%88%86%E7%B1%BB%E9%85%8D%E7%BD%AE%E4%B8%89%E8%80%85%E5%85%B3%E7%B3%BB.png)
+
+默认情况：
+Namespace=public，Group=DEFAULT_GROUP, 默认Cluster是DEFAULT。
+
+
+
+Nacos默认的命名空间是public，Namespace主要用来实现隔离。
+
+比方说我们现在有三个环境：开发、测试、生产环境，我们就可以创建三个Namespace，不同的Namespace之间是隔离的。
+
+
+
+Group默认是DEFAULT_GROUP，Group可以把不同的微服务划分到同一个分组里面去
+
+Service就是微服务；一个Service可以包含多个Cluster（集群），Nacos默认Cluster是DEFAULT，Cluster是对指定微服务的一个虚拟划分。
+比方说为了容灾，将Service微服务分别部署在了杭州机房和广州机房，
+这时就可以给杭州机房的Service微服务起一个集群名称（HZ），
+给广州机房的Service微服务起一个集群名称（GZ），还可以尽量让同一个机房的微服务互相调用，以提升性能。
+
+
+
+最后是Instance，就是微服务的实例。
+
+##### 三种方案加载配置
+
+###### DataID方案
+
+指定spring.profile.active和配置文件的DataID来使不同环境下读取不同的配置
+
+默认空间+默认分组+新建dev和test两个DataID
+
+通过spring.profile.active属性就能进行多环境下配置文件的读取
+
+![DataID方案加载配置](https://typora-nhh.oss-cn-chengdu.aliyuncs.com/SpringCloudAlibaba/DataID%E6%96%B9%E6%A1%88%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE.png)
